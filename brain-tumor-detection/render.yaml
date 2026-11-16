@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: brainsight-ai-backend
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: TF_ENABLE_ONEDNN_OPTS
+        value: "0"
+      - key: TF_NUM_INTEROP_THREADS
+        value: "1"
+      - key: TF_NUM_INTRAOP_THREADS
+        value: "2"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: brain_tumor_detection
+      - key: FRONTEND_URL
+        sync: false
+      - key: ALLOW_MOCK_FALLBACK
+        value: "true"

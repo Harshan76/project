@@ -1,0 +1,11 @@
+# Project-level gitignore
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+brain_tumor.db

@@ -10,6 +10,14 @@ _MODEL = None
 _MODEL_PATH = None
 
 def get_model_path():
+    """
+    Returns path to trained CNN weights file.
+    Supports MODEL_PATH environment variable for production container deployments.
+    """
+    env_path = os.getenv('MODEL_PATH')
+    if env_path and os.path.exists(env_path):
+        return env_path
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     keras_path = os.path.join(base_dir, 'models', 'brain_tumor_model.keras')
     h5_path = os.path.join(base_dir, 'models', 'brain_tumor_model.h5')
@@ -20,10 +28,28 @@ def get_model_path():
     return keras_path  # Default target location
 
 def is_model_available():
-    """Checks whether a valid trained model weights file is present."""
+    """
+    Checks whether a valid trained model weights file is present.
+    If missing and MODEL_DOWNLOAD_URL is configured, attempts automatic download.
+    """
     path = get_model_path()
     if os.path.exists(path) and os.path.getsize(path) > 1000:
         return True, path
+
+    # Optional automatic download for headless cloud containers
+    download_url = os.getenv('MODEL_DOWNLOAD_URL')
+    if download_url:
+        try:
+            import urllib.request
+            print(f"[Model Download] Downloading weights from: {download_url} to {path}...")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            urllib.request.urlretrieve(download_url, path)
+            if os.path.exists(path) and os.path.getsize(path) > 1000:
+                print(f"[Model Download] Successfully downloaded {os.path.getsize(path)} bytes.")
+                return True, path
+        except Exception as e:
+            print(f"[Model Download Warning] Could not download weights from {download_url}: {e}")
+
     return False, path
 
 def load_tumor_model():

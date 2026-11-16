@@ -622,9 +622,13 @@ def get_db_manager() -> DatabaseManager:
 import sqlite3
 import json
 
-SQLITE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'brain_tumor.db')
+SQLITE_PATH = os.getenv('SQLITE_DB_PATH') or os.path.join(
+    os.getenv('STORAGE_DIR', os.path.dirname(os.path.abspath(__file__))), 
+    'brain_tumor.db'
+)
 
 def get_sqlite_conn():
+    os.makedirs(os.path.dirname(os.path.abspath(SQLITE_PATH)), exist_ok=True)
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn

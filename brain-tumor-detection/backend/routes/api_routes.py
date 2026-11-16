@@ -114,7 +114,7 @@ def upload_mri():
     scan_id = f"SCAN-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
     patient_id = request.form.get('patient_id') or f"PAT-{datetime.now().strftime('%y%m%d%H%M')}"
     
-    upload_dir = os.path.join(current_app.root_path, 'uploads')
+    upload_dir = current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, 'uploads'))
     os.makedirs(upload_dir, exist_ok=True)
     
     saved_filename = f"{scan_id}_{filename}"
@@ -171,7 +171,8 @@ def enhance():
         return jsonify({"error": f"Scan with ID '{scan_id}' not found"}), 404
         
     input_path = scan.get('original_image_path') or scan.get('original_path')
-    enhanced_dir = os.path.join(current_app.root_path, 'enhanced_images')
+    enhanced_dir = current_app.config.get('ENHANCED_FOLDER', os.path.join(current_app.root_path, 'enhanced_images'))
+    os.makedirs(enhanced_dir, exist_ok=True)
     
     # Extract params with defaults
     clahe_clip_limit = float(data.get('clahe_clip_limit', 2.5))
@@ -251,7 +252,8 @@ def predict():
         pred_result = predict_tumor(target_path)
         
         # 2. Grad-CAM Generation
-        gradcam_dir = os.path.join(current_app.root_path, 'enhanced_images')
+        gradcam_dir = current_app.config.get('ENHANCED_FOLDER', os.path.join(current_app.root_path, 'enhanced_images'))
+        os.makedirs(gradcam_dir, exist_ok=True)
         grad_res = create_gradcam_overlay(
             image_path=target_path,
             model=model,
@@ -299,7 +301,8 @@ def generate_report():
             "error": "Scan has not been classified yet. Run /api/predict first."
         }), 400
         
-    reports_dir = os.path.join(current_app.root_path, 'reports')
+    reports_dir = current_app.config.get('REPORTS_FOLDER', os.path.join(current_app.root_path, 'reports'))
+    os.makedirs(reports_dir, exist_ok=True)
     
     try:
         report_res = generate_pdf_report(scan, reports_dir)
@@ -414,7 +417,7 @@ def dashboard_stats():
 @api_bp.route('/sample-images', methods=['GET'])
 def sample_images():
     """Lists available sample MRI images to facilitate immediate evaluation and demo."""
-    sample_dir = os.path.join(current_app.root_path, 'sample_mris')
+    sample_dir = current_app.config.get('SAMPLES_FOLDER', os.path.join(current_app.root_path, 'sample_mris'))
     samples = []
     if os.path.exists(sample_dir):
         for fn in os.listdir(sample_dir):
